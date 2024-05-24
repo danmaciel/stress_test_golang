@@ -16,3 +16,16 @@ url: url completa do site que sera feito o teste
 requests: quantidade total de requisicoes que serao executadas
 concurrency: quantidade de requisicoes executadas simultaneamente
 ```
+
+Para gerar uma imagem Docker que tem a aplicacao pronta pra uso, entre no diretorio raiz da aplicacao e rode o seguinte comando para gerar a 
+imagem
+
+```
+docker build -t nome_da_imagem .
+```
+
+Para executar
+
+```
+docker run -it nome_da_imagem --url=http://www.site.com -r 50 -c 2
+```

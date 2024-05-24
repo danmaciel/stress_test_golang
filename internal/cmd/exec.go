@@ -32,8 +32,6 @@ var execCmd = &cobra.Command{
 		requests, _ := cmd.Flags().GetString("requests")
 		concurrency, _ := cmd.Flags().GetString("concurrency")
 
-		fmt.Printf("Resultado: url: %v - requests: %v - concurrency: %v", url, requests, concurrency)
-
 		_, err := http.Get(url)
 
 		if err != nil {
@@ -49,6 +47,8 @@ var execCmd = &cobra.Command{
 		if errConcurrencyConv != nil {
 			concurrencyCount = 1
 		}
+
+		fmt.Printf("Iniciando com os parametros: url: %v - requests: %v - concurrency: %v", url, requests, concurrency)
 
 		result := exectRotine(url, reqCount, concurrencyCount)
 		print(result)
@@ -139,7 +139,7 @@ func finishReport(r string, statusCounter map[string]int, timeStart time.Time) s
 	end := time.Now()
 	r += fmt.Sprintf("\nFinalizado em %v", end.Format(("02/01/2006 15:04:05 ")))
 	r += fmt.Sprintf("\nTempo decorrido  %v", end.Sub(timeStart))
-	r += "\nQuantidade de status code recebido: "
+	r += "\nStatus code recebidos: "
 	var total int
 	for i, v := range statusCounter {
 		r += fmt.Sprintf("\n  => status %v = %v", i, v)
