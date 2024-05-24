@@ -82,14 +82,14 @@ func exectRotine(url string, requests int, concurrency int) string {
 			case <-erroInRequisition:
 				paralellReqControl <- struct{}{}
 				wg.Add(1)
-				go execGet(&wg, url, status, paralellReqControl, requests)
+				go execGet(&wg, url, status, paralellReqControl)
 			}
 		}
 	}()
 
 	for i := 0; i < requests; i++ {
 		paralellReqControl <- struct{}{}
-		go execGet(&wg, url, status, paralellReqControl, requests)
+		go execGet(&wg, url, status, paralellReqControl)
 	}
 
 	wg.Wait()
@@ -98,7 +98,7 @@ func exectRotine(url string, requests int, concurrency int) string {
 
 }
 
-func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-chan struct{}, totalRequests int) {
+func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-chan struct{}) {
 	defer wg.Done()
 	res, err := http.Get(url)
 
