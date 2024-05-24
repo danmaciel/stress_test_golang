@@ -4,8 +4,10 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -13,13 +15,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CounterHttpStatus struct {
-	Status200    int
-	Status404    int
-	Status500    int
-	Status329    int
-	OthersStatus int
-}
+var (
+	tr = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	clientHttp = &http.Client{
+		Transport: tr,
+		Timeout:   5 * time.Second,
+	}
+)
 
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
@@ -31,13 +35,6 @@ var execCmd = &cobra.Command{
 		url, _ := cmd.Flags().GetString("url")
 		requests, _ := cmd.Flags().GetString("requests")
 		concurrency, _ := cmd.Flags().GetString("concurrency")
-
-		_, err := http.Get(url)
-
-		if err != nil {
-			fmt.Printf("\nO site nao esta acessivel")
-			return
-		}
 
 		reqCount, errReqConv := strconv.Atoi(requests)
 		if errReqConv != nil {
@@ -93,17 +90,19 @@ func exectRotine(url string, requests int, concurrency int) string {
 	}
 
 	wg.Wait()
-
+	fmt.Print("\033[u\033[K")
 	return finishReport(report, status, startTime)
 
 }
 
 func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-chan struct{}) {
 	defer wg.Done()
-	res, err := http.Get(url)
+
+	res, err := clientHttp.Get(url)
 
 	if err != nil {
-		fmt.Printf("error making http request: %s\n", err)
+		fmt.Printf("\nErro ao acessar o site: %s\n", err)
+		os.Exit(1)
 	}
 
 	index := strconv.Itoa(res.StatusCode)
@@ -113,10 +112,6 @@ func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-c
 		statusCounter[strconv.Itoa(res.StatusCode)] = 1
 	}
 
-	var total int
-	for _, v := range statusCounter {
-		total += v
-	}
 	fmt.Print("\033[u\033[K")
 	fmt.Printf("\nAguarde ")
 

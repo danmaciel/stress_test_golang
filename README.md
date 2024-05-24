@@ -27,5 +27,11 @@ docker build -t nome_da_imagem .
 Para executar
 
 ```
+docker run -it nome_da_imagem --url=http://www.site.com --requests 50 --concurrency 2
+```
+
+ou
+
+```
 docker run -it nome_da_imagem --url=http://www.site.com -r 50 -c 2
 ```
