@@ -17,11 +17,16 @@ import (
 
 var (
 	tr = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		ForceAttemptHTTP2: true,
 	}
 	clientHttp = &http.Client{
 		Transport: tr,
-		Timeout:   5 * time.Second,
+		Timeout:   50 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+
+			return nil
+		},
 	}
 )
 
@@ -79,14 +84,14 @@ func exectRotine(url string, requests int, concurrency int) string {
 			case <-erroInRequisition:
 				paralellReqControl <- struct{}{}
 				wg.Add(1)
-				go execGet(&wg, url, status, paralellReqControl)
+				go execGet(&wg, url, status, paralellReqControl, requests)
 			}
 		}
 	}()
 
 	for i := 0; i < requests; i++ {
 		paralellReqControl <- struct{}{}
-		go execGet(&wg, url, status, paralellReqControl)
+		go execGet(&wg, url, status, paralellReqControl, requests)
 	}
 
 	wg.Wait()
@@ -95,7 +100,7 @@ func exectRotine(url string, requests int, concurrency int) string {
 
 }
 
-func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-chan struct{}) {
+func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-chan struct{}, total int) {
 	defer wg.Done()
 
 	res, err := clientHttp.Get(url)
@@ -113,10 +118,15 @@ func execGet(wg *sync.WaitGroup, url string, statusCounter map[string]int, p <-c
 	}
 
 	fmt.Print("\033[u\033[K")
-	fmt.Printf("\nAguarde ")
+	var currentV int
+	for c := range statusCounter {
+		currentV += statusCounter[c]
+	}
+
+	fmt.Printf("\nAguarde -> %v/%v", currentV, total)
 
 	<-p
-
+	fmt.Print("\033[u\033[K")
 }
 
 func initReport(url string, requests int, concurrency int, timeStart time.Time) string {
@@ -134,7 +144,7 @@ func finishReport(r string, statusCounter map[string]int, timeStart time.Time) s
 	end := time.Now()
 	r += fmt.Sprintf("\nFinalizado em %v", end.Format(("02/01/2006 15:04:05 ")))
 	r += fmt.Sprintf("\nTempo decorrido  %v", end.Sub(timeStart))
-	r += "\nStatus code recebidos: "
+	r += "\nStatus code que foram recebidos: "
 	var total int
 	for i, v := range statusCounter {
 		r += fmt.Sprintf("\n  => status %v = %v", i, v)

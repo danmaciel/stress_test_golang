@@ -1,6 +1,5 @@
 # Teste de stress com Golang
 
-
 ## Como usar?
 
 Entre na raiz do projeto e execute o seguinte comando para criar e subir o banco de dados Mysql e o servidor do rabbitMq:
